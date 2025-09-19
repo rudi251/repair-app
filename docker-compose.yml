@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build: ./backend
+    environment:
+      - PORT=8000
+      - MONGO_URI=mongodb://mongo:27017/repairdb
+      - JWT_SECRET=replace_with_secure_value
+      - UPLOAD_DIR=./src/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    volumes:
+      - ./backend/src/uploads:/app/src/uploads
+      - ./backend:/app
+
+  frontend:
+    build: 
+      context: ./frontend
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "3000:5173"
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8000/api
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
